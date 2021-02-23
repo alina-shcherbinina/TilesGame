@@ -13,22 +13,24 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.Random;
 
-public class MyTiles extends View {
 
+public class MyTiles extends View implements View.OnClickListener {
     int[][] tiles = new int[4][4];
     int darkColor = Color.GRAY;
     int brightColor = Color.rgb(98,0,238);
     DisplayMetrics displaymetrics = getResources().getDisplayMetrics();
-    int width = displaymetrics.widthPixels;
-    int height = displaymetrics.heightPixels;
-    int tileWidth = width / 13;
-    int tileHeight = height / 13;
+    int screenSize = displaymetrics.widthPixels;
+    int heightCenterCorrection = (displaymetrics.heightPixels - screenSize) / 2;
+    int tileSize = screenSize / 13;
     boolean check;
 
     public MyTiles(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        setOnClickListener(this);
+
         Random r = new Random();
         for (int i = 0; i < tiles.length; i++) {
             for (int j = 0; j < tiles.length; j++) {
@@ -51,10 +53,10 @@ public class MyTiles extends View {
             for (int j = 0; j < tiles.length; j++) {
                 p.setColor(tiles[i][j]);
                 canvas.drawRect(
-                        width / 5 * (i + 1) - tileWidth,
-                        height / 5 * (j + 1) - tileHeight,
-                        width / 5 * (i + 1) + tileWidth,
-                        height / 5 * (j + 1) + tileHeight,
+                        screenSize / 5 * (i + 1) - tileSize,
+                        heightCenterCorrection + screenSize / 5 * (j + 1) - tileSize,
+                        screenSize / 5 * (i + 1) + tileSize,
+                        heightCenterCorrection + screenSize / 5 * (j + 1) + tileSize,
                         p);
             }
         }
@@ -63,83 +65,115 @@ public class MyTiles extends View {
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        int x = (int) event.getX();
-        int y = (int) event.getY();
-
-        //Определяем на какую плитку тыкнули
         if (event.getAction() == MotionEvent.ACTION_UP) {
+            int x = (int) event.getX();
+            int y = (int) event.getY();
+            //Определяем на какую плитку тыкнули
             int i = -1;
             int j = -1;
-            if (x > width / 5 - tileWidth && x < width / 5 + tileWidth) {
+            if (x > screenSize / 5 - tileSize && x < screenSize / 5 + tileSize) {
                 i = 0;
-            } else if (x > width / 5 * 2 - tileWidth && x < width / 5 * 2 + tileWidth) {
+            } else if (x > screenSize / 5 * 2 - tileSize && x < screenSize / 5 * 2 + tileSize) {
                 i = 1;
-            } else if (x > width / 5 * 3 - tileWidth && x < width / 5 * 3 + tileWidth) {
+            } else if (x > screenSize / 5 * 3 - tileSize && x < screenSize / 5 * 3 + tileSize) {
                 i = 2;
-            } else if (x > width / 5 * 4 - tileWidth && x < width / 5 * 4 + tileWidth) {
+            } else if (x > screenSize / 5 * 4 - tileSize && x < screenSize / 5 * 4 + tileSize) {
                 i = 3;
             }
 
-            if (y > height / 5 - tileHeight && y < height / 5 + tileHeight) {
+            if (y > heightCenterCorrection + screenSize / 5 - tileSize &&
+                    y < heightCenterCorrection + screenSize / 5 + tileSize) {
                 j = 0;
-            } else if (y > height / 5 * 2 - tileHeight && y < height / 5 * 2 + tileHeight) {
+            } else if (y > heightCenterCorrection + screenSize / 5 * 2 - tileSize &&
+                    y < heightCenterCorrection + screenSize / 5 * 2 + tileSize) {
                 j = 1;
-            } else if (y > height / 5 * 3 - tileHeight && y < height / 5 * 3 + tileHeight) {
+            } else if (y > heightCenterCorrection + screenSize / 5 * 3 - tileSize &&
+                    y < heightCenterCorrection + screenSize / 5 * 3 + tileSize) {
                 j = 2;
-            } else if (y > height / 5 * 4 - tileHeight && y < height / 5 * 4 + tileHeight) {
+            } else if (y > heightCenterCorrection + screenSize / 5 * 4 - tileSize &&
+                    y < heightCenterCorrection + screenSize / 5 * 4 + tileSize) {
                 j = 3;
             }
+            changeTilesColors(i, j);
+            checkForWin();
+            invalidate();
+        }
+        return true;
+    }
 
-            //Меняем цвета плиток
-            if (i != -1 && j != -1) {
-                if (tiles[i][j] == brightColor) {
-                    tiles[i][j] = darkColor;
-                } else {
-                    tiles[i][j] = brightColor;
+    //Проверка условия для победы
+    public boolean checkForWin() {
+        check = true;
+        for (int k = 0; k < tiles.length; k++) {
+            for (int d = 1; d < tiles.length; d++) {
+                if (tiles[k][d] != tiles[k][d - 1]) {
+                    check = false;
+                    break;
                 }
-                for (int k = 0; k < tiles.length; k++) {
-                    if (tiles[i][k] == brightColor) {
-                        tiles[i][k] = darkColor;
-                    } else {
-                        tiles[i][k] = brightColor;
-                    }
-                }
-                for (int k = 0; k < tiles.length; k++) {
-                    if (tiles[k][j] == brightColor) {
-                        tiles[k][j] = darkColor;
-                    } else {
-                        tiles[k][j] = brightColor;
-                    }
-                }
-
-                //Проверка условия для победы
-                check = true;
-                for (int k = 0; k < tiles.length; k++) {
-                    for (int d = 1; d < tiles.length; d++) {
-                        if (tiles[k][d] != tiles[k][d - 1]) {
-                            check = false;
-                            break;
-                        }
-                    }
-                    if (!check) {
-                        break;
-                    }
-                    for (int d = 1; d < tiles.length; d++) {
-                        if (tiles[d][k] != tiles[d - 1][k]) {
-                            check = false;
-                            break;
-                        }
-                    }
-                }
-                if (check) {
-                    Toast toast = Toast.makeText(getContext(),
-                            "Победа, победа, вместо обеда!", Toast.LENGTH_LONG);
-                    toast.show();
+            }
+            if (!check) {
+                break;
+            }
+            for (int d = 1; d < tiles.length; d++) {
+                if (tiles[d][k] != tiles[d - 1][k]) {
+                    check = false;
+                    break;
                 }
             }
         }
+        if (check) {
+            Toast toast = Toast.makeText(getContext(),
+                    "Победа, победа, вместо обеда!", Toast.LENGTH_LONG);
+            toast.show();
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-        invalidate();
-        return true;
+    public void changeTilesColors(int i, int j) {
+        //Меняем цвета плиток
+        if (i != -1 && j != -1) {
+            if (tiles[i][j] == brightColor) {
+                tiles[i][j] = darkColor;
+            } else {
+                tiles[i][j] = brightColor;
+            }
+            for (int k = 0; k < tiles.length; k++) {
+                if (tiles[i][k] == brightColor) {
+                    tiles[i][k] = darkColor;
+                } else {
+                    tiles[i][k] = brightColor;
+                }
+            }
+            for (int k = 0; k < tiles.length; k++) {
+                if (tiles[k][j] == brightColor) {
+                    tiles[k][j] = darkColor;
+                } else {
+                    tiles[k][j] = brightColor;
+                }
+            }
+            invalidate();
+        }
+    }
+
+    //Функция для авто победы
+    @Override
+    public void onClick(View v) {
+        while (!checkForWin()) {
+            ArrayList<int[]> listOfDarkTiles = new ArrayList<>();
+            for (int i = 0; i < tiles.length; i++) {
+                for (int j = 0; j < tiles.length; j++) {
+                    if (tiles[i][j] == darkColor) {
+                        listOfDarkTiles.add(new int[] {i, j});
+                    }
+                }
+            }
+            for (int i = 0; i < listOfDarkTiles.size(); i++) {
+                changeTilesColors(listOfDarkTiles.get(i)[0], listOfDarkTiles.get(i)[1]);
+            }
+        }
     }
 }
+
+
