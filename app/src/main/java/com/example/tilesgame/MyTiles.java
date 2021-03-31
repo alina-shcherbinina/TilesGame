@@ -27,6 +27,7 @@ public class MyTiles extends View implements View.OnClickListener {
     int tileSize = screenSize / 13;
     boolean check;
 
+    //TODO: its a constructor but without any fields if i could get the tile generation out here and place in in a function
     public MyTiles(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         setOnClickListener(this);
@@ -61,7 +62,7 @@ public class MyTiles extends View implements View.OnClickListener {
             }
         }
     }
-
+//TODO: we have tiles array to track our on touch event
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -102,6 +103,7 @@ public class MyTiles extends View implements View.OnClickListener {
     }
 
     //Проверка условия для победы
+    //TODO:
     public boolean checkForWin() {
         check = true;
         for (int k = 0; k < tiles.length; k++) {
@@ -130,7 +132,7 @@ public class MyTiles extends View implements View.OnClickListener {
             return false;
         }
     }
-
+//TODO: simplify
     public void changeTilesColors(int i, int j) {
         //Меняем цвета плиток
         if (i != -1 && j != -1) {
