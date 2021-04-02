@@ -19,12 +19,7 @@ public class MainActivity extends AppCompatActivity {
         myView = findViewById(R.id.myTiles);
         button = findViewById(R.id.solve);
 
-        //todo: simplify
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                myView.callOnClick();
-            }
-        });
+        //todo: simplify ~done
+        button.setOnClickListener(v -> myView.callOnClick());
     }
 }

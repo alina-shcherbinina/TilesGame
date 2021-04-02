@@ -5,8 +5,9 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -16,166 +17,170 @@ import androidx.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Random;
 
+class Tile {
+    int color;
+    int left;
+    int right;
+    int bottom;
+    int top;
+
+    Tile(int l, int t, int r, int b, int c) {
+        left = l;
+        top = t;
+        right = r;
+        bottom = b;
+        color = c;
+    }
+
+    int getColor() { // dont forget its int
+        return color;
+    }
+
+    void setColor(int c) {
+        color = c;
+    }
+}
+
+
 
 public class MyTiles extends View implements View.OnClickListener {
-    int[][] tiles = new int[4][4];
+    Tile[][] tiles = new Tile[4][4];
+
     int darkColor = Color.GRAY;
     int brightColor = Color.rgb(98,0,238);
-    DisplayMetrics displaymetrics = getResources().getDisplayMetrics();
-    int screenSize = displaymetrics.widthPixels;
-    int heightCenterCorrection = (displaymetrics.heightPixels - screenSize) / 2;
-    int tileSize = screenSize / 13;
-    boolean check;
 
-    //TODO: its a constructor but without any fields if i could get the tile generation out here and place in in a function
     public MyTiles(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         setOnClickListener(this);
-
-        Random r = new Random();
-        for (int i = 0; i < tiles.length; i++) {
-            for (int j = 0; j < tiles.length; j++) {
-                if (r.nextInt(2) == 1) {
-                    tiles[i][j] = brightColor;
-                } else  {
-                    tiles[i][j] = darkColor;
-                }
-            }
-        }
     }
+
+
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        @SuppressLint("DrawAllocation") Paint p = new Paint();
+        Paint p = new Paint();
+
+        int width = getWidth();
+        int height = getHeight();
+        int heightCenterCorrection = (height - width) / 2;
+
+        int tileSize = width / 13;
 
         //Рисуем плитку
+
+        int color = 0;
         for (int i = 0; i < tiles.length; i++) {
             for (int j = 0; j < tiles.length; j++) {
-                p.setColor(tiles[i][j]);
-                canvas.drawRect(
-                        screenSize / 5 * (i + 1) - tileSize,
-                        heightCenterCorrection + screenSize / 5 * (j + 1) - tileSize,
-                        screenSize / 5 * (i + 1) + tileSize,
-                        heightCenterCorrection + screenSize / 5 * (j + 1) + tileSize,
-                        p);
+
+                int left = width / 5 * (i + 1) - tileSize;
+                int top = heightCenterCorrection + width / 5 * (j + 1) - tileSize;
+                int right = width / 5 * (i + 1) + tileSize;
+                int bottom = heightCenterCorrection + width / 5 * (j + 1) + tileSize;
+
+                Rect tile = new Rect();
+                tile.set(left, top, right, bottom);
+
+                Random r = new Random();
+
+                if (r.nextInt(2) == 1) {
+                    color = 0;
+                     p.setColor(brightColor);
+                } else  {
+                    color = 1;
+                    p.setColor(darkColor);
+                }
+
+                canvas.drawRect(tile, p);
+                tiles[i][j] = new Tile(left, top, right, bottom, color);
+
             }
         }
+
     }
+
+
 //TODO: we have tiles array to track our on touch event
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        int width = getWidth();
+        int height = getHeight();
+
         if (event.getAction() == MotionEvent.ACTION_UP) {
             int x = (int) event.getX();
             int y = (int) event.getY();
-            //Определяем на какую плитку тыкнули
-            int i = -1;
-            int j = -1;
-            if (x > screenSize / 5 - tileSize && x < screenSize / 5 + tileSize) {
-                i = 0;
-            } else if (x > screenSize / 5 * 2 - tileSize && x < screenSize / 5 * 2 + tileSize) {
-                i = 1;
-            } else if (x > screenSize / 5 * 3 - tileSize && x < screenSize / 5 * 3 + tileSize) {
-                i = 2;
-            } else if (x > screenSize / 5 * 4 - tileSize && x < screenSize / 5 * 4 + tileSize) {
-                i = 3;
-            }
 
-            if (y > heightCenterCorrection + screenSize / 5 - tileSize &&
-                    y < heightCenterCorrection + screenSize / 5 + tileSize) {
-                j = 0;
-            } else if (y > heightCenterCorrection + screenSize / 5 * 2 - tileSize &&
-                    y < heightCenterCorrection + screenSize / 5 * 2 + tileSize) {
-                j = 1;
-            } else if (y > heightCenterCorrection + screenSize / 5 * 3 - tileSize &&
-                    y < heightCenterCorrection + screenSize / 5 * 3 + tileSize) {
-                j = 2;
-            } else if (y > heightCenterCorrection + screenSize / 5 * 4 - tileSize &&
-                    y < heightCenterCorrection + screenSize / 5 * 4 + tileSize) {
-                j = 3;
-            }
-            changeTilesColors(i, j);
-            checkForWin();
-            invalidate();
+                for (int i = 0; i < 4; i++) {
+                    for (int j = 0; j < 4; j++) {
+
+                        if (tiles[i][j].left < x && tiles[i][j].right > x && tiles[i][j].top < y && tiles[i][j].bottom > y) {
+
+                            int k = i, m = j;
+
+                            for (int ii = 0; ii < 4; ii++) {
+                                for (int jj = 0; jj < 4; jj++) {
+
+                                    if (ii == k || jj == m) {
+                                        if (tiles[ii][jj].getColor() == 0)
+                                            tiles[ii][jj].setColor(1);
+                                        else
+                                            tiles[ii][jj].setColor(0);
+                                    }
+                                }
+                            }
+
+                            checkForWin();
+                            invalidate();
+                            break;
+
+                        }
+                    }
+                }
         }
         return true;
     }
 
-    //Проверка условия для победы
+
     //TODO:
     public boolean checkForWin() {
-        check = true;
-        for (int k = 0; k < tiles.length; k++) {
-            for (int d = 1; d < tiles.length; d++) {
-                if (tiles[k][d] != tiles[k][d - 1]) {
-                    check = false;
-                    break;
-                }
-            }
-            if (!check) {
-                break;
-            }
-            for (int d = 1; d < tiles.length; d++) {
-                if (tiles[d][k] != tiles[d - 1][k]) {
-                    check = false;
-                    break;
-                }
+        int sum = 0;
+
+        for (int i = 0; i < tiles.length; i++) {
+            for (int j = 0; j < tiles.length; j++) {
+                sum += tiles[i][j].getColor();
             }
         }
-        if (check) {
-            Toast toast = Toast.makeText(getContext(),
-                    "Победа, победа, вместо обеда!", Toast.LENGTH_LONG);
-            toast.show();
+        Log.d("my tag", "sum " + sum);
+
+        if (sum == 4 * 4 || sum == 0) {
+            Toast.makeText(getContext(),
+                    "Победа, победа, вместо обеда!", Toast.LENGTH_SHORT).show();
+
             return true;
         } else {
             return false;
         }
     }
-//TODO: simplify
-    public void changeTilesColors(int i, int j) {
-        //Меняем цвета плиток
-        if (i != -1 && j != -1) {
-            if (tiles[i][j] == brightColor) {
-                tiles[i][j] = darkColor;
-            } else {
-                tiles[i][j] = brightColor;
-            }
-            for (int k = 0; k < tiles.length; k++) {
-                if (tiles[i][k] == brightColor) {
-                    tiles[i][k] = darkColor;
-                } else {
-                    tiles[i][k] = brightColor;
-                }
-            }
-            for (int k = 0; k < tiles.length; k++) {
-                if (tiles[k][j] == brightColor) {
-                    tiles[k][j] = darkColor;
-                } else {
-                    tiles[k][j] = brightColor;
-                }
-            }
-            invalidate();
-        }
-    }
+
 
     //Функция для авто победы
     @Override
     public void onClick(View v) {
+        Log.d("check", "functiom " + checkForWin());
         while (!checkForWin()) {
-            ArrayList<int[]> listOfDarkTiles = new ArrayList<>();
+            Log.d("check", "in while ");
             for (int i = 0; i < tiles.length; i++) {
                 for (int j = 0; j < tiles.length; j++) {
-                    if (tiles[i][j] == darkColor) {
-                        listOfDarkTiles.add(new int[] {i, j});
+                    if (tiles[i][j].color == 0) {
+                        tiles[i][j].setColor(1);
                     }
                 }
             }
-            for (int i = 0; i < listOfDarkTiles.size(); i++) {
-                changeTilesColors(listOfDarkTiles.get(i)[0], listOfDarkTiles.get(i)[1]);
-            }
+
         }
     }
+
 }
 
 
